@@ -51,7 +51,7 @@ func main() {
 	smuggleFile := smuggleCmd.String("file", "", "File to smuggle. (required)")
 	smugglePaths := smuggleCmd.String("path", "/", "Comma-separated paths to deliver payload. (example: '/download/older.html,/download/newer.html')")
 	smuggleName := smuggleCmd.String("name", "", "Name of the file for download. (example: download.exe) (required)")
-	smuggleKey := smuggleCmd.Int("key", 32, "Random byte key length of XOR for the smuggled file.")
+	smuggleLen := smuggleCmd.Int("len", 32, "Random byte key length of XOR for the smuggled file.")
 
 	fileServerDir := fileServerCmd.String("dir", ".", "Directory to serve files. (default: current directory)")
 
@@ -94,7 +94,7 @@ func main() {
 			fmt.Println("Error: The parameters -file and -name are required for 'smuggle'.")
 			os.Exit(1)
 		}
-		runSmuggle(*smuggleFile, *smuggleName, *smugglePaths, *smuggleKey)
+		runSmuggle(*smuggleFile, *smuggleName, *smugglePaths, *smuggleLen)
 	case "server":
 		fileServerCmd.Parse(os.Args[2:])
 		runFileServer(*fileServerDir)
@@ -132,8 +132,8 @@ func runDeliver(filename string, paths string) {
 	startServer()
 }
 
-func runSmuggle(filename, name, paths string, smuggleKey int) {
-	xorKey := make([]byte, smuggleKey)
+func runSmuggle(filename, name, paths string, smuggleLen int) {
+	xorKey := make([]byte, smuggleLen)
 	_, err := rand.Read(xorKey)
 	if err != nil {
 		fmt.Println("Error generating XOR key:", err)
