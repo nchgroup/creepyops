@@ -51,7 +51,7 @@ func main() {
 	smuggleFile := smuggleCmd.String("file", "", "File to smuggle. (required)")
 	smugglePaths := smuggleCmd.String("path", "/", "Comma-separated paths to deliver payload. (example: '/download/older.html,/download/newer.html')")
 	smuggleName := smuggleCmd.String("name", "", "Name of the file for download. (example: download.exe) (required)")
-	smuggleKey := smuggleCmd.Int("key", 32, "Random byte key length of XOR for the smuggled file. (required)")
+	smuggleKey := smuggleCmd.Int("key", 32, "Random byte key length of XOR for the smuggled file.")
 
 	fileServerDir := fileServerCmd.String("dir", ".", "Directory to serve files. (default: current directory)")
 
