@@ -43,7 +43,7 @@ Subcommand 'smuggle' options:
   -file string
         File to smuggle. (required)
   -key int
-        Random byte key length of XOR for the smuggled file. (required) (default 32)
+        Random byte key length of XOR for the smuggled file. (default 32)
   -name string
         Name of the file for download. (example: download.exe) (required)
   -path string
