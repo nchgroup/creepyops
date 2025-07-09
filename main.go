@@ -33,13 +33,14 @@ func (rec *statusRecorder) WriteHeader(code int) {
 }
 
 func main() {
-	flag.StringVar(&bind, "bind", "0.0.0.0:8000", "Bind address.")
-	flag.StringVar(&certFile, "cert", "", "Path to SSL certificate file. If provided, enables HTTPS.")
-	flag.StringVar(&keyFile, "key", "", "Path to SSL key file. If provided, enables HTTPS.")
-	flag.BoolVar(&only200, "200", false, "Log only 200 responses.")
-	flag.StringVar(&customServer, "banner", "Microsoft-IIS/10.0", "Custom Server header to include in responses for banner grabbing.")
-	showHelp := flag.Bool("help", false, "Show help for all commands.")
-	showHelpShort := flag.Bool("h", false, "Show help for all commands.")
+	globalFlags := flag.NewFlagSet("global", flag.ContinueOnError)
+	globalFlags.StringVar(&bind, "bind", "0.0.0.0:8000", "Bind address.")
+	globalFlags.StringVar(&certFile, "cert", "", "Path to SSL certificate file. If provided, enables HTTPS.")
+	globalFlags.StringVar(&keyFile, "key", "", "Path to SSL key file. If provided, enables HTTPS.")
+	globalFlags.BoolVar(&only200, "200", false, "Log only 200 responses.")
+	globalFlags.StringVar(&customServer, "banner", "Microsoft-IIS/10.0", "Custom Server header to include in responses for banner grabbing.")
+	showHelp := globalFlags.Bool("help", false, "Show help for all commands.")
+	showHelpShort := globalFlags.Bool("h", false, "Show help for all commands.")
 
 	deliverCmd := flag.NewFlagSet("deliver", flag.ExitOnError)
 	smuggleCmd := flag.NewFlagSet("smuggle", flag.ExitOnError)
@@ -55,28 +56,16 @@ func main() {
 
 	fileServerDir := fileServerCmd.String("dir", ".", "Directory to serve files. (default: current directory)")
 
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nSubcommands:\n")
-		fmt.Fprintf(os.Stderr, "  deliver   - Deliver a file to specified paths\n")
-		fmt.Fprintf(os.Stderr, "  smuggle  - Smuggle a file inside HTML\n")
-		fmt.Fprintf(os.Stderr, "  server   - Start a file server\n")
-		fmt.Fprintf(os.Stderr, "\nGlobal Options:\n")
-		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nSubcommand 'deliver' options:\n")
-		deliverCmd.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nSubcommand 'smuggle' options:\n")
-		smuggleCmd.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nSubcommand 'server' options:\n")
-		fileServerCmd.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nExamples:\n")
-		fmt.Fprintf(os.Stderr, "  %s deliver -file=/home/kali/payloads/revtcp.ps1 -path=/hello.jpg\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "  %s smuggle -file=file.exe -name=totallynotavirus.exe -path=/download\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "  %s server -dir=/home/kali/payloads -bind=0.0.0.0:8080\n", os.Args[0])
+	remainingArgs := os.Args[1:]
+	for i, arg := range remainingArgs {
+		if arg == "deliver" || arg == "smuggle" || arg == "server" {
+			globalFlags.Parse(remainingArgs[:i])
+			os.Args = append([]string{os.Args[0]}, remainingArgs[i:]...)
+			break
+		}
 	}
-
 	if len(os.Args) < 2 || *showHelp || *showHelpShort {
-		flag.Usage()
+		printUsage(deliverCmd, smuggleCmd, fileServerCmd)
 		os.Exit(1)
 	}
 
@@ -103,6 +92,31 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+}
+
+func printUsage(deliverCmd, smuggleCmd, fileServerCmd *flag.FlagSet) {
+	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "\nSubcommands:\n")
+	fmt.Fprintf(os.Stderr, "  deliver   - Deliver a file to specified paths\n")
+	fmt.Fprintf(os.Stderr, "  smuggle  - Smuggle a file inside HTML\n")
+	fmt.Fprintf(os.Stderr, "  server   - Start a file server\n")
+	fmt.Fprintf(os.Stderr, "\nGlobal Options:\n")
+	fmt.Fprintf(os.Stderr, "  -bind       Bind address.\n")
+	fmt.Fprintf(os.Stderr, "  -cert       Path to SSL certificate file.\n")
+	fmt.Fprintf(os.Stderr, "  -key        Path to SSL key file.\n")
+	fmt.Fprintf(os.Stderr, "  -200        Log only 200 responses.\n")
+	fmt.Fprintf(os.Stderr, "  -banner     Custom Server header for banner grabbing.\n")
+	fmt.Fprintf(os.Stderr, "  -help, -h   Show help for all commands.\n")
+	fmt.Fprintf(os.Stderr, "\nSubcommand 'deliver' options:\n")
+	deliverCmd.PrintDefaults()
+	fmt.Fprintf(os.Stderr, "\nSubcommand 'smuggle' options:\n")
+	smuggleCmd.PrintDefaults()
+	fmt.Fprintf(os.Stderr, "\nSubcommand 'server' options:\n")
+	fileServerCmd.PrintDefaults()
+	fmt.Fprintf(os.Stderr, "\nExamples:\n")
+	fmt.Fprintf(os.Stderr, "  %s deliver -file=/home/kali/payloads/revtcp.ps1 -path=/hello.jpg\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "  %s -bind=0.0.0.0:80 smuggle -file=file.exe -name=totallynotavirus.exe -path=/download\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "  %s server -dir=/home/kali/payloads\n", os.Args[0])
 }
 
 func runDeliver(filename string, paths string) {
@@ -286,8 +300,8 @@ func logRequests(handler http.HandlerFunc) http.HandlerFunc {
 		handler(recorder, r)
 
 		if !only200 || recorder.status == http.StatusOK {
-			fmt.Printf("+ Time: %s | Method: %s | IP: %s | Status: %d | Host: http%s://%s:%s \n",
-				time.Now().Format(time.RFC3339), r.Method, r.RemoteAddr, recorder.status, getProtocol(), r.Host, strings.Split(bind, ":")[1])
+			fmt.Printf("+ %s | IP: %s | Status: %d | %s: http%s://%s%s \n",
+				time.Now().Format(time.RFC3339), r.RemoteAddr, recorder.status, r.Method, getProtocol(), r.Host, r.URL.Path)
 		}
 	}
 }
