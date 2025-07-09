@@ -300,7 +300,7 @@ func logRequests(handler http.HandlerFunc) http.HandlerFunc {
 		handler(recorder, r)
 
 		if !only200 || recorder.status == http.StatusOK {
-			fmt.Printf("+ %s | IP: %s | Status: %d | %s: http%s://%s%s \n",
+			fmt.Printf("+ %s | IP: %s | Status: %d | %s: http%s://%s%s\n",
 				time.Now().Format(time.RFC3339), r.RemoteAddr, recorder.status, r.Method, getProtocol(), r.Host, r.URL.Path)
 		}
 	}
