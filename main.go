@@ -56,6 +56,11 @@ func main() {
 
 	fileServerDir := fileServerCmd.String("dir", ".", "Directory to serve files. (default: current directory)")
 
+	if len(os.Args) < 2 || *showHelp || *showHelpShort {
+		printUsage(deliverCmd, smuggleCmd, fileServerCmd)
+		os.Exit(1)
+	}
+
 	remainingArgs := os.Args[1:]
 	for i, arg := range remainingArgs {
 		if arg == "deliver" || arg == "smuggle" || arg == "server" {
@@ -63,10 +68,6 @@ func main() {
 			os.Args = append([]string{os.Args[0]}, remainingArgs[i:]...)
 			break
 		}
-	}
-	if len(os.Args) < 2 || *showHelp || *showHelpShort {
-		printUsage(deliverCmd, smuggleCmd, fileServerCmd)
-		os.Exit(1)
 	}
 
 	switch os.Args[1] {
@@ -89,7 +90,7 @@ func main() {
 		runFileServer(*fileServerDir)
 	default:
 		fmt.Println("Error: Unknown subcommand. Use 'deliver', 'smuggle', or 'server'.")
-		flag.Usage()
+		printUsage(deliverCmd, smuggleCmd, fileServerCmd)
 		os.Exit(1)
 	}
 }
@@ -97,7 +98,7 @@ func main() {
 func printUsage(deliverCmd, smuggleCmd, fileServerCmd *flag.FlagSet) {
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "\nSubcommands:\n")
-	fmt.Fprintf(os.Stderr, "  deliver   - Deliver a file to specified paths\n")
+	fmt.Fprintf(os.Stderr, "  deliver  - Deliver a file to specified paths\n")
 	fmt.Fprintf(os.Stderr, "  smuggle  - Smuggle a file inside HTML\n")
 	fmt.Fprintf(os.Stderr, "  server   - Start a file server\n")
 	fmt.Fprintf(os.Stderr, "\nGlobal Options:\n")

@@ -11,27 +11,22 @@ go build -ldflags "-s -w -buildid=" -trimpath .
 # help
 
 ```
+ $ ./creepyops -h
+Error: Unknown subcommand. Use 'deliver', 'smuggle', or 'server'.
 Usage of ./creepyops:
 
 Subcommands:
-  deliver   - Deliver a file to specified paths
+  deliver  - Deliver a file to specified paths
   smuggle  - Smuggle a file inside HTML
   server   - Start a file server
 
 Global Options:
-  -200
-        Log only 200 responses.
-  -banner string
-        Custom Server header to include in responses for banner grabbing. (default "Microsoft-IIS/10.0")
-  -bind string
-        Bind address. (default "0.0.0.0:8000")
-  -cert string
-        Path to SSL certificate file. If provided, enables HTTPS.
-  -h    Show help for all commands.
-  -help
-        Show help for all commands.
-  -key string
-        Path to SSL key file. If provided, enables HTTPS.
+  -bind       Bind address.
+  -cert       Path to SSL certificate file.
+  -key        Path to SSL key file.
+  -200        Log only 200 responses.
+  -banner     Custom Server header for banner grabbing.
+  -help, -h   Show help for all commands.
 
 Subcommand 'deliver' options:
   -file string
@@ -55,6 +50,6 @@ Subcommand 'server' options:
 
 Examples:
   ./creepyops deliver -file=/home/kali/payloads/revtcp.ps1 -path=/hello.jpg
-  ./creepyops smuggle -file=file.exe -name=totallynotavirus.exe -path=/download
-  ./creepyops server -dir=/home/kali/payloads -bind=0.0.0.0:8080
+  ./creepyops -bind=0.0.0.0:80 smuggle -file=file.exe -name=totallynotavirus.exe -path=/download
+  ./creepyops server -dir=/home/kali/payloads
 ```
